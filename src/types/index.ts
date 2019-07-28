@@ -1,5 +1,6 @@
 import axios from "../axios";
 import { Interface } from "readline";
+import { transformRequest } from "../helpers/data";
 
 export type Method = 'get' | 'GET'
   | 'delete' | 'Delete'
@@ -17,6 +18,12 @@ export interface AxiosRequestConfig {
   headers?: any
   responseType?: XMLHttpRequestResponseType //`"" | "arraybuffer" | "blob" | "document" | "json" | "text"` 字符串字面量类型
   timeout?: number
+  transformRequest?: AxiosTransformer | AxiosTransformer[]
+  transformResponse?: AxiosTransformer | AxiosTransformer[]
+  cancelToken?: CancelToken
+
+
+  [propName: string]: any //通过 `config2[key]` 这种索引的方式访问，所以需要给 `AxiosRequestConfig` 的接口定义添加一个字符串索引签名
 }
 
 export interface AxiosResponse<T = any> {
@@ -60,6 +67,10 @@ export interface AxiosInstance extends Axios {
   <T = any>(url: string, config?: AxiosRequestConfig): AxiosPromise<T>
 }
 
+export interface AxiosStatic extends AxiosInstance {
+  create(config?: AxiosRequestConfig): AxiosInstance
+}
+
 export interface ResponseData<T=any> {
   code: number
   result: T
@@ -76,5 +87,48 @@ export interface RejectedFn {
 export interface AxiosInterceptorManager<T> {
   use(resolved: ResolvedFn<T>, rejected?: RejectedFn): number
   eject(id: number): void
+}
+
+
+// CancelToken接口
+export interface AxiosTransformer {
+  (data: any, headers?: any): any
+}
+
+
+
+// 取消请求的接口设计
+export interface CancelToken {
+  promise: Promise<Cancel>
+  reason?: Cancel
+
+  throwIfRequested(): void
+}
+
+export interface Canceler {
+  (message?: string): void
+}
+
+export interface CancelExecutor {
+  (cancel: Canceler): void
+}
+
+export interface CancelTokenSource {
+  token: CancelToken
+  cancel: Canceler
+}
+
+export interface CancelTokenStatic {
+  new(executor: CancelExecutor): CancelToken
+
+  source(): CancelTokenSource
+}
+
+export interface Cancel {
+  message?: string
+}
+
+export interface CancelStatic {
+  new(message?: string): Cancel
 }
 

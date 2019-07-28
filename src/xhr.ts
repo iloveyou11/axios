@@ -2,16 +2,17 @@ import { AxiosRequestConfig, AxiosResponse, AxiosPromise } from './types'
 import { parseHeaders } from './helpers/headers'
 import { createError } from './helpers/error'
 
+
 export default function xhr(config: AxiosRequestConfig): AxiosPromise {
   return new Promise((resolve, reject) => {
-    const { url, data = null, method = 'get', headers, responseType } = config
+    const { url, data = null, method = 'get', headers, responseType, cancelToken } = config
     const request = new XMLHttpRequest()
 
     if (responseType) {
       request.responseType = responseType
     }
 
-    request.open(method.toUpperCase(), url, true) //true表示异步，默认为true
+    request.open(method.toUpperCase(), url!, true) //true表示异步，默认为true
 
     request.onreadystatechange = function handleLoad() {
       if (request.readyState !== 4) {
@@ -60,6 +61,14 @@ export default function xhr(config: AxiosRequestConfig): AxiosPromise {
       }
     })
 
+
+    if (cancelToken) {
+      cancelToken.promise.then(reason => {
+        request.abort()
+        reject(reason)
+      })
+    }
+
     request.send(data)
 
     // 响应错误
@@ -78,3 +87,5 @@ export default function xhr(config: AxiosRequestConfig): AxiosPromise {
     }
   })
 }
+
+
